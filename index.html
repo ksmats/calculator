@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>인조잔디 필요량 계산기 | KSMATS 경성매트</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
+    background: #f8f8f6;
+    color: #1a1a1a;
+    padding: 2rem 1rem;
+    min-height: 100vh;
+  }
+
+  .page-wrap {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  /* 헤더 */
+  .header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .header-brand {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .12em;
+    color: #FF6A00;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .header-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: #0A1E3A;
+    line-height: 1.3;
+    margin-bottom: 8px;
+  }
+  .header-sub {
+    font-size: 13px;
+    color: #888;
+    line-height: 1.6;
+  }
+
+  /* 칩 */
+  .info-chip {
+    display: inline-block;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 20px;
+    font-size: 11px;
+    color: #666;
+    padding: 4px 12px;
+    margin-bottom: 1.25rem;
+  }
+
+  /* 탭 */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 1.25rem;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    background: #fff;
+    color: #888;
+    text-align: center;
+    transition: all .15s;
+  }
+  .tab.on {
+    background: #0A1E3A;
+    color: #fff;
+    border-color: #0A1E3A;
+  }
+
+  /* 패널 */
+  .panel { display: none; }
+  .panel.on { display: block; }
+
+  /* 입력 */
+  .row { display: flex; gap: 10px; margin-bottom: .875rem; }
+  .field { flex: 1; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+  .field input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 15px;
+    color: #1a1a1a;
+    background: #fff;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .field input:focus { border-color: #0A1E3A; }
+
+  /* 프리셋 */
+  .preset-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: .875rem;
+  }
+  .preset-btn {
+    padding: 12px 8px;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    cursor: pointer;
+    background: #fff;
+    text-align: center;
+    transition: all .15s;
+  }
+  .preset-btn:hover { border-color: #0A1E3A; }
+  .preset-btn.on { border-color: #0A1E3A; background: #EBF3FC; }
+  .preset-btn-name { font-size: 13px; font-weight: 500; color: #1a1a1a; margin-bottom: 2px; }
+  .preset-btn-size { font-size: 11px; color: #999; }
+
+  /* 옵션 탭 */
+  .option-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .option-tab {
+    flex: 1;
+    padding: 7px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    background: #fff;
+    color: #888;
+    text-align: center;
+    transition: all .15s;
+  }
+  .option-tab.on {
+    background: #FFF0E6;
+    color: #FF6A00;
+    border-color: #FF6A00;
+  }
+
+  /* 결과 박스 */
+  .result-box {
+    background: #0A1E3A;
+    border-radius: 14px;
+    padding: 1.25rem 1.375rem;
+    margin-top: 1.25rem;
+    display: none;
+  }
+
+  .result-qty-row { margin-bottom: 14px; }
+  .result-qty-label { font-size: 11px; color: rgba(255,255,255,.5); margin-bottom: 4px; }
+  .result-qty-val { display: flex; align-items: baseline; gap: 4px; }
+  .result-qty-num { font-size: 40px; font-weight: 600; color: #fff; line-height: 1; }
+  .result-qty-unit { font-size: 15px; color: rgba(255,255,255,.6); }
+  .save-badge {
+    display: none;
+    background: rgba(29,158,117,.25);
+    color: #5DCAA5;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 3px 10px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  .result-breakdown {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    border-top: 1px solid rgba(255,255,255,.12);
+    padding-top: 12px;
+    margin-bottom: 14px;
+  }
+  .bd-label { font-size: 10px; color: rgba(255,255,255,.4); margin-bottom: 3px; }
+  .bd-val { font-size: 13px; font-weight: 500; color: rgba(255,255,255,.85); }
+
+  .cut-section {
+    background: rgba(255,255,255,.07);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .cut-section:last-child { margin-bottom: 0; }
+  .cut-title {
+    font-size: 10px;
+    color: rgba(255,255,255,.4);
+    letter-spacing: .06em;
+    margin-bottom: 9px;
+    text-transform: uppercase;
+  }
+  .cut-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+  }
+  .cut-row:last-child { margin-bottom: 0; }
+  .cut-badge {
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 2px 9px;
+    flex-shrink: 0;
+  }
+  .badge-main { background: #FF6A00; color: #fff; }
+  .badge-reuse { background: #1D9E75; color: #fff; }
+  .badge-scrap { background: rgba(255,255,255,.15); color: rgba(255,255,255,.65); }
+  .cut-spec { font-size: 13px; font-weight: 500; color: #fff; }
+  .cut-sub { font-size: 11px; color: rgba(255,255,255,.4); margin-left: auto; flex-shrink: 0; }
+
+  /* 안내 */
+  .note {
+    font-size: 11px;
+    color: #999;
+    line-height: 1.8;
+    margin-top: 12px;
+  }
+
+  /* CTA */
+  .cta-box {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    padding: 1.125rem 1.25rem;
+    margin-top: 1.5rem;
+    text-align: center;
+  }
+  .cta-label { font-size: 12px; color: #999; margin-bottom: 6px; }
+  .cta-title { font-size: 15px; font-weight: 600; color: #0A1E3A; margin-bottom: 4px; }
+  .cta-sub { font-size: 12px; color: #888; margin-bottom: 14px; line-height: 1.5; }
+  .cta-btns { display: flex; gap: 8px; }
+  .cta-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+    text-align: center;
+    transition: opacity .15s;
+  }
+  .cta-btn:hover { opacity: .85; }
+  .cta-btn-primary { background: #0A1E3A; color: #fff; }
+  .cta-btn-secondary { background: #f3f3f1; color: #0A1E3A; border: 1px solid #e5e5e5; }
+
+  /* 푸터 */
+  .footer {
+    text-align: center;
+    margin-top: 2rem;
+    font-size: 11px;
+    color: #bbb;
+  }
+
+  @media (max-width: 400px) {
+    .preset-grid { grid-template-columns: repeat(2, 1fr); }
+    .result-qty-num { font-size: 34px; }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <div class="header">
+    <div class="header-brand">KSMATS · 경성매트</div>
+    <div class="header-title">인조잔디 필요량 계산기</div>
+    <div class="header-sub">설치 면적을 입력하면 주문 수량과<br>재단 규격을 자동으로 계산해 드립니다</div>
+  </div>
+
+  <div class="info-chip">롤 폭 2m 고정 · 1m 단위 판매 · 시공 품질 기준 자동 계산</div>
+
+  <div class="tabs">
+    <div class="tab on" onclick="switchTab('direct')">직접 입력</div>
+    <div class="tab" onclick="switchTab('preset')">공간별 추천</div>
+  </div>
+
+  <div class="panel on" id="tab-direct">
+    <div class="row">
+      <div class="field">
+        <label for="inp-w">가로 (m)</label>
+        <input type="number" id="inp-w" placeholder="예) 3.4" min="0.1" step="0.1" oninput="calc()">
+      </div>
+      <div class="field">
+        <label for="inp-h">세로 (m)</label>
+        <input type="number" id="inp-h" placeholder="예) 5.2" min="0.1" step="0.1" oninput="calc()">
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="tab-preset">
+    <div class="preset-grid">
+      <div class="preset-btn" onclick="setPreset(this,1.5,2)"><div class="preset-btn-name">현관</div><div class="preset-btn-size">1.5 × 2m</div></div>
+      <div class="preset-btn" onclick="setPreset(this,2,3)"><div class="preset-btn-name">소형 베란다</div><div class="preset-btn-size">2 × 3m</div></div>
+      <div class="preset-btn" onclick="setPreset(this,3,4)"><div class="preset-btn-name">중형 베란다</div><div class="preset-btn-size">3 × 4m</div></div>
+      <div class="preset-btn" onclick="setPreset(this,2,5)"><div class="preset-btn-name">테라스</div><div class="preset-btn-size">2 × 5m</div></div>
+      <div class="preset-btn" onclick="setPreset(this,1.2,2.5)"><div class="preset-btn-name">캠핑카</div><div class="preset-btn-size">1.2 × 2.5m</div></div>
+      <div class="preset-btn" onclick="setPreset(this,5,5)"><div class="preset-btn-name">마당</div><div class="preset-btn-size">5 × 5m</div></div>
+    </div>
+  </div>
+
+  <div class="result-box" id="result-box">
+    <div id="option-tab-wrap" style="display:none"></div>
+
+    <div class="result-qty-row">
+      <div class="result-qty-label">주문 수량</div>
+      <div class="result-qty-val">
+        <span class="result-qty-num" id="r-qty">0</span>
+        <span class="result-qty-unit">m</span>
+        <span class="save-badge" id="r-save"></span>
+      </div>
+    </div>
+
+    <div class="result-breakdown">
+      <div><div class="bd-label">필요 롤 수</div><div class="bd-val" id="r-rolls">-</div></div>
+      <div><div class="bd-label">장당 길이</div><div class="bd-val" id="r-len">-</div></div>
+      <div><div class="bd-label">총 원단 길이</div><div class="bd-val" id="r-total">-</div></div>
+    </div>
+
+    <div class="cut-section">
+      <div class="cut-title">재단 후 발송 규격</div>
+      <div id="cut-main"></div>
+    </div>
+
+    <div class="cut-section" id="scrap-section" style="display:none">
+      <div class="cut-title" id="scrap-title">자투리 (함께 발송)</div>
+      <div id="cut-scrap"></div>
+    </div>
+  </div>
+
+  <p class="note">
+    ※ 롤 폭 2m 기준으로 이음새와 원단 로스를 함께 고려해 최적 방향을 자동 선택합니다.<br>
+    ※ 자투리 재활용 가능 시 절약 옵션을 함께 안내해 드립니다.<br>
+    ※ 소수점 수량은 올림 처리되며, 자투리 원단은 함께 발송됩니다.<br>
+    ※ 주문 시 배송 메모란에 설치 면적을 기입해 주시면 위 규격으로 재단하여 발송해 드립니다.
+  </p>
+
+  <div class="cta-box">
+    <div class="cta-label">계산 완료 후 바로 구매하세요</div>
+    <div class="cta-title">KSMATS 인조잔디 재단구매</div>
+    <div class="cta-sub">1m 단위 소량 구매 · 전국 배송 · 자투리 함께 발송<br>배송 메모에 설치 면적 기재 시 맞춤 재단</div>
+    <div class="cta-btns">
+      <a class="cta-btn cta-btn-primary" href="https://smartstore.naver.com/seodomat/products/11182059082" target="_blank">스마트스토어 바로가기</a>
+      <a class="cta-btn cta-btn-secondary" href="tel:16441154">1644-1154 전화상담</a>
+    </div>
+  </div>
+
+  <div class="footer">
+    © KSMATS 경성매트 · Beyond The Surface
+  </div>
+
+</div>
+
+<script>
+const RW=2, SCRAP_THR=0.5;
+function r2(v){return Math.round(v*100)/100;}
+function fmt(v){return(v%1===0)?v+'':v.toFixed(1);}
+function scrapRatio(w){const rem=r2(w%RW);if(rem<0.01)return 0;return r2((RW-rem)/RW);}
+
+function solve(a,b){
+  const longS=Math.max(a,b), shortS=Math.min(a,b);
+  const piecesFromOne=Math.floor(RW/shortS);
+  if(piecesFromOne>=2){
+    const pieceLen=r2(longS/piecesFromOne);
+    const totalRaw=pieceLen;
+    const qty=Math.ceil(totalRaw);
+    const leftoverW=r2(RW-shortS*piecesFromOne);
+    const orderLeftover=r2(qty-totalRaw);
+    return{type:'single_roll',rolls:1,qty,totalRaw,pieces:piecesFromOne,pieceW:shortS,pieceLen,leftoverW,orderLeftover};
+  }
+  let widthSide,lenSide;
+  if(scrapRatio(shortS)>=SCRAP_THR){widthSide=longS;lenSide=shortS;}
+  else{widthSide=shortS;lenSide=longS;}
+  const fullRolls=Math.floor(widthSide/RW);
+  const remainder=r2(widthSide-fullRolls*RW);
+  const scrapW=remainder>0.01?r2(RW-remainder):0;
+  const rolls=Math.ceil(widthSide/RW);
+  const totalRaw=r2(rolls*lenSide);
+  const qty=Math.ceil(totalRaw);
+  let reuse=null;
+  if(remainder>0.01){
+    const ppr=Math.floor(RW/remainder);
+    if(ppr>=2){
+      const pieceLen=r2(lenSide/ppr);
+      if(pieceLen>=0.3){
+        const extraLen=pieceLen;
+        const extraQty=Math.ceil(extraLen);
+        const saveTotal=r2(fullRolls*lenSide+extraLen);
+        const saveQty=Math.ceil(saveTotal);
+        const saved=qty-saveQty;
+        if(saved>0){
+          reuse={ppr,pieceLen,extraLen,extraQty,saveQty,saved,
+            leftoverW:r2(RW-remainder*ppr),
+            orderLeftover:r2(extraQty-extraLen)};
+        }
+      }
+    }
+  }
+  return{type:'multi_roll',rolls,fullRolls,remainder,scrapW,widthSide,lenSide,totalRaw,qty,reuse};
+}
+
+function buildOptions(a,b){
+  const s=solve(a,b);
+  const opts=[];
+  if(s.type==='single_roll'){
+    const rows=[];
+    rows.push(`<div class="cut-row"><span class="cut-badge badge-main">1장</span><span class="cut-spec">${fmt(RW)}m × ${fmt(s.qty)}m</span></div>`);
+    rows.push(`<div class="cut-row"><span class="cut-badge badge-reuse">${s.pieces}조각</span><span class="cut-spec">${fmt(s.pieceW)}m × ${fmt(s.pieceLen)}m</span><span class="cut-sub">↑에서 재단</span></div>`);
+    const scrapRows=[];
+    if(s.leftoverW>0.01) scrapRows.push(`<div class="cut-row"><span class="cut-badge badge-scrap">1장</span><span class="cut-spec">${fmt(s.leftoverW)}m × ${fmt(s.pieceLen)}m</span></div>`);
+    if(s.orderLeftover>0.01) scrapRows.push(`<div class="cut-row"><span class="cut-badge badge-scrap">1장</span><span class="cut-spec">${fmt(RW)}m × ${fmt(s.orderLeftover)}m</span></div>`);
+    opts.push({label:'기본',qty:s.qty,rolls:1,lenSide:s.pieceLen,totalRaw:s.totalRaw,mainRows:rows.join(''),scrapRows:scrapRows.length>0?scrapRows.join(''):null,savedLabel:null});
+  } else {
+    const baseRows=[];
+    if(s.fullRolls>0) baseRows.push(`<div class="cut-row"><span class="cut-badge badge-main">${s.fullRolls}장</span><span class="cut-spec">${fmt(RW)}m × ${fmt(s.lenSide)}m</span></div>`);
+    if(s.remainder>0.01) baseRows.push(`<div class="cut-row"><span class="cut-badge badge-main">1장</span><span class="cut-spec">${fmt(s.remainder)}m × ${fmt(s.lenSide)}m</span></div>`);
+    const baseScrap=s.scrapW>0.01?`<div class="cut-row"><span class="cut-badge badge-scrap">1장</span><span class="cut-spec">${fmt(s.scrapW)}m × ${fmt(s.lenSide)}m</span></div>`:null;
+    opts.push({label:'기본',qty:s.qty,rolls:s.rolls,lenSide:s.lenSide,totalRaw:s.totalRaw,mainRows:baseRows.join(''),scrapRows:baseScrap,savedLabel:null});
+    if(s.reuse){
+      const r=s.reuse;
+      const saveRows=[];
+      if(s.fullRolls>0) saveRows.push(`<div class="cut-row"><span class="cut-badge badge-main">${s.fullRolls}장</span><span class="cut-spec">${fmt(RW)}m × ${fmt(s.lenSide)}m</span></div>`);
+      saveRows.push(`<div class="cut-row"><span class="cut-badge badge-main">1장</span><span class="cut-spec">${fmt(RW)}m × ${fmt(r.extraQty)}m</span><span class="cut-sub">추가 주문</span></div>`);
+      saveRows.push(`<div class="cut-row"><span class="cut-badge badge-reuse">${r.ppr}조각</span><span class="cut-spec">${fmt(s.remainder)}m × ${fmt(r.pieceLen)}m</span><span class="cut-sub">↑에서 재단</span></div>`);
+      const scrapRows=[];
+      if(r.leftoverW>0.01) scrapRows.push(`<div class="cut-row"><span class="cut-badge badge-scrap">1장</span><span class="cut-spec">${fmt(r.leftoverW)}m × ${fmt(r.pieceLen)}m</span></div>`);
+      if(r.orderLeftover>0.01) scrapRows.push(`<div class="cut-row"><span class="cut-badge badge-scrap">1장</span><span class="cut-spec">${fmt(RW)}m × ${fmt(r.orderLeftover)}m</span></div>`);
+      opts.push({label:`절약 재단 (-${r.saved}m)`,qty:r.saveQty,rolls:s.fullRolls+1,lenSide:s.lenSide,totalRaw:r2(s.fullRolls*s.lenSide+r.extraLen),mainRows:saveRows.join(''),scrapRows:scrapRows.length>0?scrapRows.join(''):null,savedLabel:`${r.saved}m 절약`});
+    }
+  }
+  return opts;
+}
+
+let currentOptions=[];
+
+function renderResult(opt){
+  document.getElementById('r-qty').textContent=opt.qty;
+  document.getElementById('r-rolls').textContent=opt.rolls+'장';
+  document.getElementById('r-len').textContent=fmt(opt.lenSide)+'m';
+  document.getElementById('r-total').textContent=opt.totalRaw.toFixed(1)+'m';
+  const saveEl=document.getElementById('r-save');
+  if(opt.savedLabel){saveEl.textContent=opt.savedLabel;saveEl.style.display='inline-block';}
+  else saveEl.style.display='none';
+  document.getElementById('cut-main').innerHTML=opt.mainRows;
+  if(opt.scrapRows){
+    document.getElementById('cut-scrap').innerHTML=opt.scrapRows;
+    document.getElementById('scrap-section').style.display='block';
+  } else document.getElementById('scrap-section').style.display='none';
+}
+
+function showResult(a,b){
+  if(!a||!b||a<=0||b<=0){document.getElementById('result-box').style.display='none';return;}
+  currentOptions=buildOptions(a,b);
+  const tabWrap=document.getElementById('option-tab-wrap');
+  if(currentOptions.length>1){
+    tabWrap.style.display='flex';
+    tabWrap.className='option-tabs';
+    tabWrap.innerHTML=currentOptions.map((o,i)=>`<div class="option-tab${i===0?' on':''}" onclick="selectOpt(${i})">${o.label}</div>`).join('');
+  } else tabWrap.style.display='none';
+  renderResult(currentOptions[0]);
+  document.getElementById('result-box').style.display='block';
+}
+
+function selectOpt(idx){
+  document.querySelectorAll('.option-tab').forEach((t,i)=>t.classList.toggle('on',i===idx));
+  renderResult(currentOptions[idx]);
+}
+
+function calc(){
+  const a=parseFloat(document.getElementById('inp-w').value)||0;
+  const b=parseFloat(document.getElementById('inp-h').value)||0;
+  showResult(a,b);
+}
+
+function setPreset(el,a,b){
+  document.querySelectorAll('.preset-btn').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  showResult(a,b);
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',(tab==='direct'&&i===0)||(tab==='preset'&&i===1)));
+  document.getElementById('tab-direct').classList.toggle('on',tab==='direct');
+  document.getElementById('tab-preset').classList.toggle('on',tab==='preset');
+  document.getElementById('result-box').style.display='none';
+}
+</script>
+</body>
+</html>
