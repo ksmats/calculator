@@ -137,17 +137,18 @@
   }
   .origin-card{
     background:var(--card);border:1px solid var(--line);border-radius:16px;
-    padding:20px 24px;margin-bottom:16px;
+    padding:16px 18px;margin-bottom:16px;display:none;
   }
+  .origin-card.show{display:block;}
   .origin-card .origin-label{
-    font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px;
+    font-size:12px;font-weight:700;color:var(--navy);margin-bottom:10px;
   }
   .origin-grid{
-    display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px;
+    display:grid;grid-template-columns:repeat(5,1fr);gap:6px;
   }
   .origin-chip{
-    background:#FAFAF8;border:1px solid var(--line);border-radius:10px;
-    padding:10px 6px;text-align:center;font-size:13px;font-weight:700;color:var(--muted);
+    background:#FAFAF8;border:1px solid var(--line);border-radius:8px;
+    padding:8px 2px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);
   }
   .origin-chip.active{
     background:var(--navy);border-color:var(--navy);color:#fff;
@@ -159,17 +160,6 @@
   <div class="eyebrow">KSMATS SHIPPING</div>
   <h1>배송비 계산기</h1>
   <p class="sub">현무암 디딤석 배송 주소와 수량을 입력하면<br>예상 배송비를 바로 확인할 수 있어요</p>
-
-  <div class="origin-card">
-    <div class="origin-label">KSMATS 전국 5개 출고지</div>
-    <div class="origin-grid" id="origin-grid">
-      <div class="origin-chip" data-origin="평택">평택</div>
-      <div class="origin-chip" data-origin="광양">광양</div>
-      <div class="origin-chip" data-origin="보령">보령</div>
-      <div class="origin-chip" data-origin="대구">대구</div>
-      <div class="origin-chip" data-origin="원주">원주</div>
-    </div>
-  </div>
 
   <div class="card">
     <div class="field">
@@ -205,6 +195,17 @@
     </div>
   </div>
 
+  <div class="origin-card" id="origin-card">
+    <div class="origin-label">KSMATS 전국 5개 출고지 · 담당 출고지 자동 배정</div>
+    <div class="origin-grid" id="origin-grid">
+      <div class="origin-chip" data-origin="평택">평택</div>
+      <div class="origin-chip" data-origin="광양">광양</div>
+      <div class="origin-chip" data-origin="보령">보령</div>
+      <div class="origin-chip" data-origin="대구">대구</div>
+      <div class="origin-chip" data-origin="원주">원주</div>
+    </div>
+  </div>
+
   <div class="result-card" id="result-card">
     <div class="result-row"><span class="k">담당 출고지</span><span class="v" id="r-origin">-</span></div>
     <div class="result-row"><span class="k">실제 도로거리</span><span class="v" id="r-distance">-</span></div>
@@ -214,7 +215,7 @@
       <div class="amount" id="r-fee">-</div>
     </div>
     <div class="cta-row">
-      <a href="#" class="cta-btn cta-sms" id="btn-sms">문자로 결과 받기</a>
+      <a href="#" class="cta-btn cta-sms" id="btn-sms">배차 문의하기</a>
       <a href="tel:1644-1154" class="cta-btn cta-call">전화 상담 1644-1154</a>
     </div>
   </div>
@@ -274,6 +275,7 @@ const addrError = document.getElementById('addr-error');
 const qtyValue = document.getElementById('qty-value');
 const qtyHint = document.getElementById('qty-hint');
 const resultCard = document.getElementById('result-card');
+const originCard = document.getElementById('origin-card');
 const originChips = document.querySelectorAll('.origin-chip');
 const btnSms = document.getElementById('btn-sms');
 
@@ -341,6 +343,7 @@ function updateQty(){
 function compute(){
   if(!selectedRegion){
     resultCard.classList.remove('show');
+    originCard.classList.remove('show');
     originChips.forEach(c => c.classList.remove('active'));
     return;
   }
@@ -351,6 +354,7 @@ function compute(){
   document.getElementById('r-truck').textContent = t.label + ' 차량';
   document.getElementById('r-fee').textContent = fee.toLocaleString('ko-KR') + '원';
   resultCard.classList.add('show');
+  originCard.classList.add('show');
 
   originChips.forEach(c => {
     c.classList.toggle('active', c.dataset.origin === selectedRegion.origin);
