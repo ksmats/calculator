@@ -121,9 +121,36 @@
   .final-fee{text-align:center;padding-top:18px;margin-top:8px;}
   .final-fee .label{font-size:12px;color:#B9C2D4;margin-bottom:4px;}
   .final-fee .amount{font-size:32px;font-weight:800;color:var(--orange);letter-spacing:-.01em;}
+  .cta-row{display:flex;gap:10px;margin-top:20px;}
+  .cta-btn{
+    flex:1;padding:13px 10px;border-radius:10px;font-size:14px;font-weight:700;
+    text-align:center;text-decoration:none;cursor:pointer;border:none;
+    display:flex;align-items:center;justify-content:center;gap:6px;
+  }
+  .cta-sms{background:rgba(255,255,255,.12);color:#fff;}
+  .cta-sms:hover{background:rgba(255,255,255,.2);}
+  .cta-call{background:var(--orange);color:#fff;}
+  .cta-call:hover{background:#E85F00;}
   .disclaimer{
     font-size:12px;color:var(--muted);text-align:center;margin-top:18px;line-height:1.6;
     padding:0 8px;
+  }
+  .origin-card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:20px 24px;margin-bottom:16px;
+  }
+  .origin-card .origin-label{
+    font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px;
+  }
+  .origin-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px;
+  }
+  .origin-chip{
+    background:#FAFAF8;border:1px solid var(--line);border-radius:10px;
+    padding:10px 6px;text-align:center;font-size:13px;font-weight:700;color:var(--muted);
+  }
+  .origin-chip.active{
+    background:var(--navy);border-color:var(--navy);color:#fff;
   }
 </style>
 </head>
@@ -132,6 +159,17 @@
   <div class="eyebrow">KSMATS SHIPPING</div>
   <h1>배송비 계산기</h1>
   <p class="sub">현무암 디딤석 배송 주소와 수량을 입력하면<br>예상 배송비를 바로 확인할 수 있어요</p>
+
+  <div class="origin-card">
+    <div class="origin-label">KSMATS 전국 5개 출고지</div>
+    <div class="origin-grid" id="origin-grid">
+      <div class="origin-chip" data-origin="평택">평택</div>
+      <div class="origin-chip" data-origin="광양">광양</div>
+      <div class="origin-chip" data-origin="보령">보령</div>
+      <div class="origin-chip" data-origin="대구">대구</div>
+      <div class="origin-chip" data-origin="원주">원주</div>
+    </div>
+  </div>
 
   <div class="card">
     <div class="field">
@@ -174,6 +212,10 @@
     <div class="final-fee">
       <div class="label">예상 배송비</div>
       <div class="amount" id="r-fee">-</div>
+    </div>
+    <div class="cta-row">
+      <a href="#" class="cta-btn cta-sms" id="btn-sms">문자로 결과 받기</a>
+      <a href="tel:1644-1154" class="cta-btn cta-call">전화 상담 1644-1154</a>
     </div>
   </div>
 
@@ -232,6 +274,8 @@ const addrError = document.getElementById('addr-error');
 const qtyValue = document.getElementById('qty-value');
 const qtyHint = document.getElementById('qty-hint');
 const resultCard = document.getElementById('result-card');
+const originChips = document.querySelectorAll('.origin-chip');
+const btnSms = document.getElementById('btn-sms');
 
 const postcodeOverlay = document.getElementById('postcode-overlay');
 const postcodeTarget = document.getElementById('postcode-embed-target');
@@ -295,7 +339,11 @@ function updateQty(){
 }
 
 function compute(){
-  if(!selectedRegion){ resultCard.classList.remove('show'); return; }
+  if(!selectedRegion){
+    resultCard.classList.remove('show');
+    originChips.forEach(c => c.classList.remove('active'));
+    return;
+  }
   const t = pickTonnage(qty);
   const fee = selectedRegion.fee[t.key];
   document.getElementById('r-origin').textContent = selectedRegion.origin + ' 출고지';
@@ -303,6 +351,21 @@ function compute(){
   document.getElementById('r-truck').textContent = t.label + ' 차량';
   document.getElementById('r-fee').textContent = fee.toLocaleString('ko-KR') + '원';
   resultCard.classList.add('show');
+
+  originChips.forEach(c => {
+    c.classList.toggle('active', c.dataset.origin === selectedRegion.origin);
+  });
+
+  const addr = (fullAddressText || selectedRegion.region) + (addrDetail.value.trim() ? ' ' + addrDetail.value.trim() : '');
+  const smsBody =
+`[KSMATS 디딤석 배송비 조회]
+배송지: ${addr}
+담당출고지: ${selectedRegion.origin}
+실제거리: ${selectedRegion.distance}km
+필요차량: ${t.label}
+수량: ${qty}개
+예상배송비: ${fee.toLocaleString('ko-KR')}원`;
+  btnSms.href = `sms:010-5067-5532?body=${encodeURIComponent(smsBody)}`;
 }
 </script>
 </body>
