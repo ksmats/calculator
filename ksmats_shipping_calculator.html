@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KSMATS 배송비 계산기</title>
+<style>
+  :root{
+    --navy:#0A1E3A;
+    --navy-light:#16305A;
+    --orange:#FF6A00;
+    --bg:#F5F3EF;
+    --card:#FFFFFF;
+    --line:#E4E1D8;
+    --text:#1C2430;
+    --muted:#767A82;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    background-image:radial-gradient(circle, #00000008 1px, transparent 1px);
+    background-size:16px 16px;
+    font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    color:var(--text);
+    padding:32px 16px 64px;
+  }
+  .wrap{max-width:480px;margin:0 auto;}
+  .eyebrow{
+    text-align:center;font-size:12px;letter-spacing:.14em;font-weight:700;
+    color:var(--orange);text-transform:uppercase;margin-bottom:8px;
+  }
+  h1{
+    text-align:center;font-size:24px;font-weight:800;color:var(--navy);
+    margin:0 0 6px;letter-spacing:-.01em;
+  }
+  .sub{
+    text-align:center;color:var(--muted);font-size:14px;margin:0 0 28px;line-height:1.5;
+  }
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:24px;margin-bottom:16px;
+  }
+  label{
+    display:block;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;
+  }
+  .field{margin-bottom:20px;}
+  .field:last-child{margin-bottom:0;}
+  input[type="text"]{
+    width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;
+    font-size:15px;background:#FAFAF8;color:var(--text);
+  }
+  input[type="text"]:focus{outline:2px solid var(--orange);outline-offset:1px;}
+  .results{
+    max-height:220px;overflow-y:auto;margin-top:8px;border:1px solid var(--line);
+    border-radius:10px;display:none;background:#fff;
+  }
+  .results.show{display:block;}
+  .result-item{
+    padding:11px 14px;font-size:14px;cursor:pointer;border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .result-item:last-child{border-bottom:none;}
+  .result-item:hover{background:#FFF3EA;}
+  .result-item .dist{color:var(--muted);font-size:12px;}
+  .selected-tag{
+    margin-top:10px;display:none;align-items:center;justify-content:space-between;
+    background:#FFF3EA;border:1px solid #FFD9B8;border-radius:10px;padding:10px 14px;
+    font-size:14px;font-weight:700;color:var(--navy);
+  }
+  .selected-tag.show{display:flex;}
+  .selected-tag button{
+    background:none;border:none;color:var(--orange);font-weight:700;cursor:pointer;
+    font-size:13px;padding:0;
+  }
+  .qty-row{display:flex;align-items:center;gap:12px;}
+  .qty-btn{
+    width:40px;height:40px;border-radius:10px;border:1px solid var(--line);
+    background:#FAFAF8;font-size:18px;font-weight:700;color:var(--navy);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .qty-btn:active{background:var(--orange);color:#fff;border-color:var(--orange);}
+  .qty-value{
+    flex:1;text-align:center;font-size:20px;font-weight:800;color:var(--navy);
+  }
+  .qty-hint{font-size:12px;color:var(--muted);margin-top:8px;text-align:center;}
+  .result-card{
+    background:var(--navy);border-radius:16px;padding:24px;color:#fff;
+    display:none;
+  }
+  .result-card.show{display:block;}
+  .result-row{
+    display:flex;justify-content:space-between;align-items:baseline;
+    padding:9px 0;border-bottom:1px solid rgba(255,255,255,.12);
+  }
+  .result-row:last-of-type{border-bottom:none;}
+  .result-row .k{font-size:13px;color:#B9C2D4;}
+  .result-row .v{font-size:14px;font-weight:700;}
+  .final-fee{
+    text-align:center;padding-top:18px;margin-top:8px;
+  }
+  .final-fee .label{font-size:12px;color:#B9C2D4;margin-bottom:4px;}
+  .final-fee .amount{font-size:32px;font-weight:800;color:var(--orange);letter-spacing:-.01em;}
+  .disclaimer{
+    font-size:12px;color:var(--muted);text-align:center;margin-top:18px;line-height:1.6;
+    padding:0 8px;
+  }
+  .empty-state{
+    text-align:center;color:var(--muted);font-size:14px;padding:20px 0;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">KSMATS SHIPPING</div>
+  <h1>배송비 계산기</h1>
+  <p class="sub">현무암 디딤석 배송지와 수량을 입력하면<br>예상 배송비를 바로 확인할 수 있어요</p>
+
+  <div class="card">
+    <div class="field">
+      <label for="region-input">배송받으실 지역</label>
+      <input type="text" id="region-input" placeholder="지역명 또는 전체 주소 입력 (예: 경기도 광주시 오포안로 174)" autocomplete="off">
+      <div class="results" id="region-results"></div>
+      <div class="selected-tag" id="selected-tag">
+        <span id="selected-name"></span>
+        <button id="clear-region">변경</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>파렛트 수량</label>
+      <div class="qty-row">
+        <button class="qty-btn" id="qty-minus">−</button>
+        <div class="qty-value" id="qty-value">1개</div>
+        <button class="qty-btn" id="qty-plus">+</button>
+      </div>
+      <div class="qty-hint" id="qty-hint">1파렛트 = 약 1톤</div>
+    </div>
+  </div>
+
+  <div class="result-card" id="result-card">
+    <div class="result-row"><span class="k">담당 출고지</span><span class="v" id="r-origin">-</span></div>
+    <div class="result-row"><span class="k">실제 도로거리</span><span class="v" id="r-distance">-</span></div>
+    <div class="result-row"><span class="k">필요 차량</span><span class="v" id="r-truck">-</span></div>
+    <div class="final-fee">
+      <div class="label">예상 배송비</div>
+      <div class="amount" id="r-fee">-</div>
+    </div>
+  </div>
+
+  <p class="disclaimer">위 금액은 조회된 데이터를 기준으로 한 예상 배송비이며,<br>도로 상황·물량에 따라 실제 청구 금액과 다를 수 있습니다.<br>정확한 배송비는 주문 확인 후 안내드립니다.</p>
+</div>
+
+<script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f4df1c3da45e73f5a2e5bb1adf46b28d&libraries=services&autoload=false"></script>
+<script>
+const DATA = [{"region":"서울특별시","origin":"평택","distance":74.3,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"부산광역시","origin":"대구","distance":146.9,"fee":{"1":130000,"3.5":195000,"5":244000,"15":344000,"25":397000}},{"region":"대구광역시","origin":"대구","distance":41.0,"fee":{"1":70000,"3.5":105000,"5":131000,"15":185000,"25":214000}},{"region":"인천광역시","origin":"평택","distance":81.0,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"광주광역시","origin":"광양","distance":109.1,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"대전광역시","origin":"평택","distance":96.0,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"울산광역시","origin":"대구","distance":141.5,"fee":{"1":130000,"3.5":195000,"5":244000,"15":344000,"25":397000}},{"region":"세종특별자치시","origin":"평택","distance":78.9,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"수원시","origin":"평택","distance":43.1,"fee":{"1":70000,"3.5":105000,"5":131000,"15":185000,"25":214000}},{"region":"성남시","origin":"평택","distance":58.2,"fee":{"1":80000,"3.5":120000,"5":150000,"15":212000,"25":244000}},{"region":"의정부시","origin":"평택","distance":100.7,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"안양시","origin":"평택","distance":66.7,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"부천시","origin":"평택","distance":85.3,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"광명시","origin":"평택","distance":75.9,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"동두천시","origin":"평택","distance":119.9,"fee":{"1":120000,"3.5":180000,"5":225000,"15":318000,"25":367000}},{"region":"안산시","origin":"평택","distance":61.7,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"고양시","origin":"평택","distance":104.4,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"과천시","origin":"평택","distance":65.5,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"구리시","origin":"평택","distance":80.1,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"남양주시","origin":"평택","distance":90.4,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"오산시","origin":"평택","distance":24.5,"fee":{"1":50000,"3.5":75000,"5":94000,"15":132000,"25":153000}},{"region":"시흥시","origin":"평택","distance":72.1,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"군포시","origin":"평택","distance":58.2,"fee":{"1":80000,"3.5":120000,"5":150000,"15":212000,"25":244000}},{"region":"의왕시","origin":"평택","distance":56.9,"fee":{"1":80000,"3.5":120000,"5":150000,"15":212000,"25":244000}},{"region":"하남시","origin":"평택","distance":76.8,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"용인시","origin":"평택","distance":39.1,"fee":{"1":60000,"3.5":90000,"5":112000,"15":159000,"25":183000}},{"region":"파주시","origin":"평택","distance":113.3,"fee":{"1":120000,"3.5":180000,"5":225000,"15":318000,"25":367000}},{"region":"이천시","origin":"원주","distance":54.7,"fee":{"1":80000,"3.5":120000,"5":150000,"15":212000,"25":244000}},{"region":"안성시","origin":"평택","distance":19.3,"fee":{"1":50000,"3.5":75000,"5":94000,"15":132000,"25":153000}},{"region":"김포시","origin":"평택","distance":101.7,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"화성시","origin":"평택","distance":51.7,"fee":{"1":80000,"3.5":120000,"5":150000,"15":212000,"25":244000}},{"region":"광주시","origin":"평택","distance":67.8,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"양주시","origin":"평택","distance":106.9,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"포천시","origin":"평택","distance":119.7,"fee":{"1":120000,"3.5":180000,"5":225000,"15":318000,"25":367000}},{"region":"여주시","origin":"원주","distance":33.1,"fee":{"1":60000,"3.5":90000,"5":112000,"15":159000,"25":183000}},{"region":"연천군","origin":"평택","distance":144.0,"fee":{"1":130000,"3.5":195000,"5":244000,"15":344000,"25":397000}},{"region":"가평군","origin":"원주","distance":104.5,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"양평군","origin":"원주","distance":58.4,"fee":{"1":80000,"3.5":120000,"5":150000,"15":212000,"25":244000}},{"region":"춘천시","origin":"원주","distance":85.0,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"강릉시","origin":"원주","distance":120.4,"fee":{"1":120000,"3.5":180000,"5":225000,"15":318000,"25":367000}},{"region":"동해시","origin":"원주","distance":156.2,"fee":{"1":140000,"3.5":210000,"5":262000,"15":371000,"25":428000}},{"region":"태백시","origin":"원주","distance":137.7,"fee":{"1":130000,"3.5":195000,"5":244000,"15":344000,"25":397000}},{"region":"속초시","origin":"원주","distance":165.2,"fee":{"1":140000,"3.5":210000,"5":262000,"15":371000,"25":428000}},{"region":"삼척시","origin":"원주","distance":169.7,"fee":{"1":140000,"3.5":210000,"5":262000,"15":371000,"25":428000}},{"region":"홍천군","origin":"원주","distance":59.9,"fee":{"1":80000,"3.5":120000,"5":150000,"15":212000,"25":244000}},{"region":"횡성군","origin":"원주","distance":19.9,"fee":{"1":50000,"3.5":75000,"5":94000,"15":132000,"25":153000}},{"region":"영월군","origin":"원주","distance":73.1,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"평창군","origin":"원주","distance":66.7,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"정선군","origin":"원주","distance":123.5,"fee":{"1":120000,"3.5":180000,"5":225000,"15":318000,"25":367000}},{"region":"철원군","origin":"평택","distance":150.5,"fee":{"1":140000,"3.5":210000,"5":262000,"15":371000,"25":428000}},{"region":"화천군","origin":"원주","distance":112.6,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"양구군","origin":"원주","distance":122.6,"fee":{"1":120000,"3.5":180000,"5":225000,"15":318000,"25":367000}},{"region":"인제군","origin":"원주","distance":112.0,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"고성군(강원)","origin":"원주","distance":167.8,"fee":{"1":140000,"3.5":210000,"5":262000,"15":371000,"25":428000}},{"region":"양양군","origin":"원주","distance":148.0,"fee":{"1":130000,"3.5":195000,"5":244000,"15":344000,"25":397000}},{"region":"청주시","origin":"평택","distance":71.0,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"충주시","origin":"원주","distance":44.0,"fee":{"1":70000,"3.5":105000,"5":131000,"15":185000,"25":214000}},{"region":"제천시","origin":"원주","distance":39.8,"fee":{"1":60000,"3.5":90000,"5":112000,"15":159000,"25":183000}},{"region":"보은군","origin":"평택","distance":100.4,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"옥천군","origin":"평택","distance":106.5,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"영동군","origin":"대구","distance":87.1,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"증평군","origin":"평택","distance":71.7,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"진천군","origin":"평택","distance":52.6,"fee":{"1":80000,"3.5":120000,"5":150000,"15":212000,"25":244000}},{"region":"괴산군","origin":"원주","distance":81.1,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"음성군","origin":"원주","distance":67.0,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"단양군","origin":"원주","distance":67.5,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"천안시","origin":"평택","distance":24.3,"fee":{"1":50000,"3.5":75000,"5":94000,"15":132000,"25":153000}},{"region":"공주시","origin":"보령","distance":66.2,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"아산시","origin":"평택","distance":29.6,"fee":{"1":60000,"3.5":90000,"5":112000,"15":159000,"25":183000}},{"region":"서산시","origin":"보령","distance":66.5,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"논산시","origin":"보령","distance":60.2,"fee":{"1":80000,"3.5":120000,"5":150000,"15":212000,"25":244000}},{"region":"계룡시","origin":"보령","distance":80.0,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"당진시","origin":"평택","distance":52.8,"fee":{"1":80000,"3.5":120000,"5":150000,"15":212000,"25":244000}},{"region":"금산군","origin":"보령","distance":118.6,"fee":{"1":120000,"3.5":180000,"5":225000,"15":318000,"25":367000}},{"region":"부여군","origin":"보령","distance":39.0,"fee":{"1":60000,"3.5":90000,"5":112000,"15":159000,"25":183000}},{"region":"서천군","origin":"보령","distance":40.2,"fee":{"1":70000,"3.5":105000,"5":131000,"15":185000,"25":214000}},{"region":"청양군","origin":"보령","distance":26.8,"fee":{"1":60000,"3.5":90000,"5":112000,"15":159000,"25":183000}},{"region":"홍성군","origin":"보령","distance":36.6,"fee":{"1":60000,"3.5":90000,"5":112000,"15":159000,"25":183000}},{"region":"예산군","origin":"보령","distance":56.6,"fee":{"1":80000,"3.5":120000,"5":150000,"15":212000,"25":244000}},{"region":"태안군","origin":"보령","distance":83.3,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"전주시","origin":"보령","distance":96.9,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"군산시","origin":"보령","distance":55.3,"fee":{"1":80000,"3.5":120000,"5":150000,"15":212000,"25":244000}},{"region":"익산시","origin":"보령","distance":74.8,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"정읍시","origin":"보령","distance":112.5,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"남원시","origin":"광양","distance":73.1,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"김제시","origin":"보령","distance":79.2,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"완주군","origin":"보령","distance":100.0,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"진안군","origin":"광양","distance":122.6,"fee":{"1":120000,"3.5":180000,"5":225000,"15":318000,"25":367000}},{"region":"무주군","origin":"대구","distance":112.4,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"장수군","origin":"광양","distance":116.1,"fee":{"1":120000,"3.5":180000,"5":225000,"15":318000,"25":367000}},{"region":"임실군","origin":"광양","distance":101.2,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"순창군","origin":"광양","distance":89.8,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"고창군","origin":"보령","distance":124.2,"fee":{"1":120000,"3.5":180000,"5":225000,"15":318000,"25":367000}},{"region":"부안군","origin":"보령","distance":92.4,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"목포시","origin":"광양","distance":143.4,"fee":{"1":130000,"3.5":195000,"5":244000,"15":344000,"25":397000}},{"region":"여수시","origin":"광양","distance":24.2,"fee":{"1":50000,"3.5":75000,"5":94000,"15":132000,"25":153000}},{"region":"순천시","origin":"광양","distance":24.1,"fee":{"1":50000,"3.5":75000,"5":94000,"15":132000,"25":153000}},{"region":"나주시","origin":"광양","distance":109.9,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"담양군","origin":"광양","distance":98.5,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"곡성군","origin":"광양","distance":62.9,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"구례군","origin":"광양","distance":43.8,"fee":{"1":70000,"3.5":105000,"5":131000,"15":185000,"25":214000}},{"region":"고흥군","origin":"광양","distance":74.1,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"보성군","origin":"광양","distance":70.7,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"화순군","origin":"광양","distance":87.3,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"장흥군","origin":"광양","distance":89.9,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"강진군","origin":"광양","distance":110.0,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"해남군","origin":"광양","distance":131.6,"fee":{"1":130000,"3.5":195000,"5":244000,"15":344000,"25":397000}},{"region":"영암군","origin":"광양","distance":122.5,"fee":{"1":120000,"3.5":180000,"5":225000,"15":318000,"25":367000}},{"region":"무안군","origin":"광양","distance":153.3,"fee":{"1":140000,"3.5":210000,"5":262000,"15":371000,"25":428000}},{"region":"함평군","origin":"광양","distance":144.1,"fee":{"1":130000,"3.5":195000,"5":244000,"15":344000,"25":397000}},{"region":"영광군","origin":"보령","distance":145.7,"fee":{"1":130000,"3.5":195000,"5":244000,"15":344000,"25":397000}},{"region":"장성군","origin":"광양","distance":119.2,"fee":{"1":120000,"3.5":180000,"5":225000,"15":318000,"25":367000}},{"region":"완도군","origin":"광양","distance":154.6,"fee":{"1":140000,"3.5":210000,"5":262000,"15":371000,"25":428000}},{"region":"진도군","origin":"광양","distance":175.4,"fee":{"1":150000,"3.5":225000,"5":281000,"15":397000,"25":458000}},{"region":"신안군","origin":"광양","distance":149.6,"fee":{"1":130000,"3.5":195000,"5":244000,"15":344000,"25":397000}},{"region":"포항시","origin":"대구","distance":99.2,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"경주시","origin":"대구","distance":102.5,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"김천시","origin":"대구","distance":47.5,"fee":{"1":80000,"3.5":120000,"5":150000,"15":212000,"25":244000}},{"region":"안동시","origin":"대구","distance":71.4,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"구미시","origin":"대구","distance":22.5,"fee":{"1":50000,"3.5":75000,"5":94000,"15":132000,"25":153000}},{"region":"영주시","origin":"원주","distance":100.7,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"영천시","origin":"대구","distance":64.0,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"상주시","origin":"대구","distance":61.2,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"문경시","origin":"대구","distance":78.4,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"경산시","origin":"대구","distance":54.1,"fee":{"1":80000,"3.5":120000,"5":150000,"15":212000,"25":244000}},{"region":"군위군","origin":"대구","distance":26.5,"fee":{"1":60000,"3.5":90000,"5":112000,"15":159000,"25":183000}},{"region":"의성군","origin":"대구","distance":48.0,"fee":{"1":80000,"3.5":120000,"5":150000,"15":212000,"25":244000}},{"region":"청송군","origin":"대구","distance":90.9,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"영양군","origin":"대구","distance":119.3,"fee":{"1":120000,"3.5":180000,"5":225000,"15":318000,"25":367000}},{"region":"영덕군","origin":"대구","distance":128.9,"fee":{"1":120000,"3.5":180000,"5":225000,"15":318000,"25":367000}},{"region":"청도군","origin":"대구","distance":76.4,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"고령군","origin":"대구","distance":71.5,"fee":{"1":90000,"3.5":135000,"5":169000,"15":238000,"25":275000}},{"region":"성주군","origin":"대구","distance":35.2,"fee":{"1":60000,"3.5":90000,"5":112000,"15":159000,"25":183000}},{"region":"예천군","origin":"대구","distance":89.7,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"봉화군","origin":"원주","distance":116.0,"fee":{"1":120000,"3.5":180000,"5":225000,"15":318000,"25":367000}},{"region":"울진군","origin":"원주","distance":184.5,"fee":{"1":150000,"3.5":225000,"5":281000,"15":397000,"25":458000}},{"region":"울릉군","origin":"원주","distance":317.2,"fee":{"1":220000,"3.5":330000,"5":412000,"15":583000,"25":672000}},{"region":"창원시","origin":"광양","distance":117.5,"fee":{"1":120000,"3.5":180000,"5":225000,"15":318000,"25":367000}},{"region":"진주시","origin":"광양","distance":57.1,"fee":{"1":80000,"3.5":120000,"5":150000,"15":212000,"25":244000}},{"region":"통영시","origin":"광양","distance":98.5,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"사천시","origin":"광양","distance":48.0,"fee":{"1":80000,"3.5":120000,"5":150000,"15":212000,"25":244000}},{"region":"김해시","origin":"광양","distance":139.1,"fee":{"1":130000,"3.5":195000,"5":244000,"15":344000,"25":397000}},{"region":"밀양시","origin":"대구","distance":96.3,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"거제시","origin":"광양","distance":118.2,"fee":{"1":120000,"3.5":180000,"5":225000,"15":318000,"25":367000}},{"region":"양산시","origin":"대구","distance":135.3,"fee":{"1":130000,"3.5":195000,"5":244000,"15":344000,"25":397000}},{"region":"의령군","origin":"광양","distance":87.7,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"함안군","origin":"광양","distance":88.6,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"창녕군","origin":"대구","distance":81.8,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"고성군(경남)","origin":"광양","distance":82.3,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"남해군","origin":"광양","distance":39.4,"fee":{"1":60000,"3.5":90000,"5":112000,"15":159000,"25":183000}},{"region":"하동군","origin":"광양","distance":23.4,"fee":{"1":50000,"3.5":75000,"5":94000,"15":132000,"25":153000}},{"region":"산청군","origin":"광양","distance":93.4,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"함양군","origin":"광양","distance":113.2,"fee":{"1":120000,"3.5":180000,"5":225000,"15":318000,"25":367000}},{"region":"거창군","origin":"대구","distance":106.0,"fee":{"1":110000,"3.5":165000,"5":206000,"15":291000,"25":336000}},{"region":"합천군","origin":"대구","distance":91.7,"fee":{"1":100000,"3.5":150000,"5":188000,"15":265000,"25":306000}},{"region":"제주시","origin":"광양","distance":255.2,"fee":{"1":190000,"3.5":285000,"5":356000,"15":503000,"25":581000}},{"region":"서귀포시","origin":"광양","distance":302.0,"fee":{"1":210000,"3.5":315000,"5":394000,"15":556000,"25":642000}}]
+;
+
+const TONNAGE_TABLE = [
+  {max:1, label:"1톤", key:"1"},
+  {max:3, label:"3.5톤", key:"3.5"},
+  {max:5, label:"5톤", key:"5"},
+  {max:15, label:"15톤", key:"15"},
+  {max:16, label:"25톤", key:"25"},
+];
+
+function pickTonnage(qty){
+  for(const t of TONNAGE_TABLE){
+    if(qty <= t.max) return t;
+  }
+  return TONNAGE_TABLE[TONNAGE_TABLE.length-1];
+}
+
+let selectedRegion = null;
+let qty = 1;
+
+const input = document.getElementById('region-input');
+const resultsBox = document.getElementById('region-results');
+const selectedTag = document.getElementById('selected-tag');
+const selectedName = document.getElementById('selected-name');
+const clearBtn = document.getElementById('clear-region');
+const qtyValue = document.getElementById('qty-value');
+const qtyHint = document.getElementById('qty-hint');
+const resultCard = document.getElementById('result-card');
+
+function findMatches(qRaw){
+  const q = qRaw.replace(/\s+/g, '');
+  if(!q) return [];
+  let matches = DATA.filter(d => {
+    const r = d.region.replace('(강원)','').replace('(경남)','');
+    return r.includes(q) || q.includes(r);
+  });
+  const goseong = matches.filter(d => d.region.startsWith('고성군'));
+  if(goseong.length > 1){
+    if(q.includes('강원')) matches = matches.filter(d => d.region !== '고성군(경남)');
+    else if(q.includes('경남') || q.includes('경상남도')) matches = matches.filter(d => d.region !== '고성군(강원)');
+  }
+  matches.sort((a,b) => a.region.length - b.region.length);
+  return matches.slice(0, 8);
+}
+
+let geocoder = null;
+if(window.kakao && kakao.maps){
+  kakao.maps.load(() => { geocoder = new kakao.maps.services.Geocoder(); });
+}
+
+const METRO_NAMES = ["서울특별시","부산광역시","대구광역시","인천광역시","광주광역시","대전광역시","울산광역시","세종특별자치시"];
+
+function matchFromGeocode(addr){
+  const r1 = addr.region_1depth_name || '';
+  const r2 = addr.region_2depth_name || '';
+  if(METRO_NAMES.includes(r1)) return DATA.find(d => d.region === r1) || null;
+  let candidates = DATA.filter(d => d.region.replace('(강원)','').replace('(경남)','') === r2);
+  if(candidates.length > 1){
+    if(r1.includes('강원')) candidates = candidates.filter(d => d.region.includes('(강원)'));
+    else if(r1.includes('경상남도')) candidates = candidates.filter(d => d.region.includes('(경남)'));
+  }
+  return candidates[0] || null;
+}
+
+let geocodeTimer = null;
+function tryGeocodeFallback(q){
+  clearTimeout(geocodeTimer);
+  if(!geocoder){ return; }
+  geocodeTimer = setTimeout(() => {
+    resultsBox.innerHTML = '<div class="empty-state">주소로 다시 찾는 중...</div>';
+    resultsBox.classList.add('show');
+    geocoder.addressSearch(q, (result, status) => {
+      if(input.value.trim() !== q) return;
+      if(status === kakao.maps.services.Status.OK && result.length > 0){
+        const matched = matchFromGeocode(result[0].address);
+        if(matched){
+          resultsBox.innerHTML = `<div class="result-item" data-region="${matched.region}">
+            <span>${matched.region}</span>
+            <span class="dist">${matched.origin} 출발 · ${matched.distance}km</span>
+          </div>`;
+          resultsBox.classList.add('show');
+          return;
+        }
+      }
+      resultsBox.innerHTML = '<div class="empty-state">일치하는 지역이 없어요. 시/군/구 이름을 포함해 입력해주세요.</div>';
+      resultsBox.classList.add('show');
+    });
+  }, 500);
+}
+
+input.addEventListener('input', () => {
+  const q = input.value.trim();
+  clearTimeout(geocodeTimer);
+  if(!q){ resultsBox.classList.remove('show'); resultsBox.innerHTML=''; return; }
+  const matches = findMatches(q);
+  if(matches.length === 0){
+    resultsBox.innerHTML = '<div class="empty-state">검색 중...</div>';
+    resultsBox.classList.add('show');
+    tryGeocodeFallback(q);
+    return;
+  }
+  resultsBox.innerHTML = matches.map(m =>
+    `<div class="result-item" data-region="${m.region}">
+      <span>${m.region}</span>
+      <span class="dist">${m.origin} 출발 · ${m.distance}km</span>
+    </div>`
+  ).join('');
+  resultsBox.classList.add('show');
+});
+
+resultsBox.addEventListener('click', (e) => {
+  const item = e.target.closest('.result-item');
+  if(!item || !item.dataset.region) return;
+  const region = DATA.find(d => d.region === item.dataset.region);
+  selectRegion(region);
+});
+
+function selectRegion(region){
+  selectedRegion = region;
+  selectedName.textContent = region.region;
+  selectedTag.classList.add('show');
+  input.value = '';
+  input.style.display = 'none';
+  resultsBox.classList.remove('show');
+  resultsBox.innerHTML = '';
+  compute();
+}
+
+clearBtn.addEventListener('click', () => {
+  selectedRegion = null;
+  selectedTag.classList.remove('show');
+  input.style.display = 'block';
+  input.value = '';
+  input.focus();
+  resultCard.classList.remove('show');
+});
+
+document.getElementById('qty-minus').addEventListener('click', () => {
+  qty = Math.max(1, qty - 1);
+  updateQty();
+});
+document.getElementById('qty-plus').addEventListener('click', () => {
+  qty = Math.min(30, qty + 1);
+  updateQty();
+});
+
+function updateQty(){
+  qtyValue.textContent = qty + '개';
+  const t = pickTonnage(qty);
+  qtyHint.textContent = `필요 차량: ${t.label} 1대 기준`;
+  compute();
+}
+
+function compute(){
+  if(!selectedRegion){ resultCard.classList.remove('show'); return; }
+  const t = pickTonnage(qty);
+  const fee = selectedRegion.fee[t.key];
+  document.getElementById('r-origin').textContent = selectedRegion.origin + ' 출고지';
+  document.getElementById('r-distance').textContent = selectedRegion.distance + 'km';
+  document.getElementById('r-truck').textContent = t.label + ' 차량';
+  document.getElementById('r-fee').textContent = fee.toLocaleString('ko-KR') + '원';
+  resultCard.classList.add('show');
+}
+</script>
+</body>
+</html>
